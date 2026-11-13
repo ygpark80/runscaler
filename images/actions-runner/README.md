@@ -2,6 +2,8 @@
 
 The `ghcr.io/ysya/actions-runner:latest` image provides one Linux amd64/arm64 runner for GitHub's official Actions cache and Runscaler's native local Actions cache. The local cache is selected per scale set with `native-actions-cache = true`; otherwise the runner uses GitHub's cache URLs. A selected local cache fails closed if its endpoint is unavailable. Artifact traffic still uses GitHub Results passthrough.
 
+"Official cache" means GitHub's hosted cache service, not the runner binary. This image uses a pinned `falcondev-oss` runner fork because the stock GitHub Worker assigns cache and Results URLs from job endpoint data; local routing needs the fork's Results override and the pinned cache patch in this directory. An official-base variant would require an equivalent Worker change and fresh runtime verification. The [compatibility evidence](../../docs/local-actions-cache-compatibility.md#runner-fork) records the fork's other differences from the official runner.
+
 ## Installed tools
 
 | Category | Contents |
@@ -35,6 +37,6 @@ docker build --platform linux/arm64 -t actions-runner:check images/actions-runne
 
 The Dockerfile pins the multiarchitecture fork base and .NET SDK build stage. It fetches an exact runner source commit, verifies and applies `fail-closed-v1.patch`, and updates the vulnerable transitive `Microsoft.AspNetCore.WebUtilities` dependency to 8.0.34 with `webutilities-audit.patch`. Only the resulting Worker assembly, its dependency manifest, and the updated WebUtilities assembly enter the final image; the SDK build stage is discarded. The installed checker pins the Worker, Listener, dependency files, patches, platform, and base identity.
 
-The `Build Runner Image` workflow builds both architectures on pull requests and publishes the multiarchitecture `latest` tag from `main`. The ARM64 signed-job cache acceptance is recorded in the [unified runner compatibility report](../../docs/unified-runner-compatibility.md). The old `actions-runner-local-cache` package remains available for rollback until its removal is separately approved.
+The `Build Runner Image` workflow builds both architectures on pull requests and publishes the multiarchitecture `latest` tag from `main`. The previous separate local-cache package has been removed; use `ghcr.io/ysya/actions-runner:latest` for both cache modes, or pin a verified digest of that package for a canary. The ARM64 signed-job cache acceptance is recorded in the [unified runner compatibility report](../../docs/unified-runner-compatibility.md).
 
 See the [original amd64 compatibility evidence](../../docs/local-actions-cache-compatibility.md) and [operator setup](../../docs/local-actions-cache.md) for local-cache behavior.
